@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = 3000;
 
@@ -26,15 +26,26 @@ app.get("/", (req, res) => {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
+
+    const booksDB = client.db("booksDB");
+    const booksColl = booksDB.collection("books");
+
+    const allBooksProject = { summary: 0, userEmail: 0, created_at: 0 };
+    app.get("/all-books", async (req, res) => {
+      const cursor = booksColl
+        .find()
+        .sort({ created_at: -1 })
+        .project(allBooksProject);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
   } finally {
-    // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
