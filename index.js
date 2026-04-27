@@ -84,6 +84,15 @@ async function run() {
       const result = await booksColl.deleteOne(query);
       res.send(result);
     });
+
+    app.post("/add-comment/:id", async (req, res) => {
+      const id = req.params.id;
+      const newComment = req.body;
+      const query = { _id: new ObjectId(id) };
+      const result = await booksColl.updateOne(query, {
+        $push: { comments: newComment },
+      });
+    });
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
