@@ -7,6 +7,13 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 
+//firebase sdk
+const admin = require("firebase-admin");
+const serviceAccount = require("./book-haven-fahim-firebase-adminsdk.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
 // 3q9J6Ge8Q5a99RyY
 const uri =
   "mongodb+srv://BookHavenAdmin:3q9J6Ge8Q5a99RyY@cluster0.gfzm6tk.mongodb.net/?appName=Cluster0";
@@ -19,6 +26,23 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const verifyFirebaseToken = async (req, res, next) => {
+  if (!req.headers.authorization) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  try {
+    const info = await admin.auth().verifyIdToken(token);
+    console.log("after token verification", info);
+    next();
+  } catch {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+};
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -41,7 +65,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/my-books", async (req, res) => {
+    app.get("/my-books", verifyFirebaseToken, async (req, res) => {
       const email = req.headers["email"];
       const query = { userEmail: email };
       const cursor = booksColl.find(query).sort({ created_at: -1 });
@@ -92,6 +116,7 @@ async function run() {
       const result = await booksColl.updateOne(query, {
         $push: { comments: newComment },
       });
+      res.send(result);
     });
     await client.db("admin").command({ ping: 1 });
     console.log(
