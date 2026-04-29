@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-require('dotenv').config()
+require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = 3000;
@@ -16,8 +16,7 @@ admin.initializeApp({
 });
 
 // 3q9J6Ge8Q5a99RyY
-const uri =
-  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gfzm6tk.mongodb.net/?appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.gfzm6tk.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -47,7 +46,7 @@ const verifyFirebaseToken = async (req, res, next) => {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Book Haven Server");
 });
 
 async function run() {
@@ -57,7 +56,7 @@ async function run() {
     const booksDB = client.db("booksDB");
     const booksColl = booksDB.collection("books");
 
-    const allBooksProject = { summary: 0, userEmail: 0, comments:0 };
+    const allBooksProject = { summary: 0, userEmail: 0, comments: 0 };
     app.get("/all-books", async (req, res) => {
       const cursor = booksColl
         .find()
@@ -75,7 +74,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/add-book", async (req, res) => {
+    app.post("/add-book", verifyFirebaseToken, async (req, res) => {
       const newBook = req.body;
       console.log("hitting post api", newBook);
       const result = await booksColl.insertOne(newBook);
@@ -88,14 +87,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/book-details/:id", async (req, res) => {
+    app.get("/book-details/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await booksColl.findOne(query);
       res.send(result);
     });
 
-    app.patch("/update-book/:id", async (req, res) => {
+    app.patch("/update-book/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const updatedBook = req.body;
       const query = { _id: new ObjectId(id) };
@@ -103,7 +102,7 @@ async function run() {
       const result = await booksColl.updateOne(query, update);
       res.send(result);
     });
-    app.delete("/delete-book/:id", async (req, res) => {
+    app.delete("/delete-book/:id", verifyFirebaseToken, async (req, res) => {
       console.log("delete this book", req.params.id);
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -111,7 +110,7 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/add-comment/:id", async (req, res) => {
+    app.post("/add-comment/:id", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const newComment = req.body;
       const query = { _id: new ObjectId(id) };
